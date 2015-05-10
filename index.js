@@ -151,9 +151,19 @@ app.post("/trip", jsonParser, function (req, res) {
     // end hour means end at that time
     // 20 means end at 8pm not 9pm
     // day of the week range from 0-6
-    var bestPOIs = getBestPOIs(data.pois, req.body.tags, 10, 20, 1, 1);
+    var startTime = 10;
+    var endTime = 20;
+    var days = 1;
+    var dayOfWeek = 1;
+    var bestPOIs = getBestPOIs(data.pois, req.body.tags, startTime, endTime, days, dayOfWeek);
 
-    res.json(bestPOIs);
+    res.json({
+      startTime: startTime,
+      endTime: endTime,
+      days: days,
+      dayOfWeek: dayOfWeek,
+      hotel: bestHotel,
+      pois: bestPOIs});
 
   });
 });
