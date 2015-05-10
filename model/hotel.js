@@ -8,7 +8,7 @@ var s = new Schema({
   name: String,
   address: String,
   star: Number,
-  tags: [String],
+  tags: Object,
   amenities: [String],
   city: ObjectId
 }, {

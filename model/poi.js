@@ -7,11 +7,11 @@ var s = new Schema({
   _id: ObjectId,
   name: String,
   address: String,
-  tags: [String],
+  tags: Object,
   city: ObjectId,
   Fee: Number,
-  Duration: Number,
-  Hours: String
+  duration: Number,
+  hours: Array
 }, {
   collection: 'poi'
 });
