@@ -54,11 +54,11 @@ app.post("/trip", jsonParser, function (req, res) {
     //if open
     if (poi.hours && poi.hours[dayOfWeek]) {
       var open = false;
-      for (var i=0; i<poi.hours[dayOfWeek].length; i++) {
-        if (poi.hours[dayOfWeek][i][0] <= hour && poi.hours[dayOfWeek][i][1] >= hour+poi.duration) {
-          open = true;
-        }
+
+      if (poi.hours[dayOfWeek][0] <= hour && poi.hours[dayOfWeek][1] >= hour+poi.duration) {
+        open = true;
       }
+
       if (!open) {
         //console.log(poi.name + " is not open on "+dayOfWeek + " at "+hour);
         return false;
@@ -147,6 +147,7 @@ app.post("/trip", jsonParser, function (req, res) {
 
   Q.allSettled([hotelsDefer.promise, poisDefer.promise]).then(function(h,p) {
     var bestHotel = getBest(data.hotels, req.body.tags);
+    var moment =require('moment');
 
     // end hour means end at that time
     // 20 means end at 8pm not 9pm
@@ -154,7 +155,7 @@ app.post("/trip", jsonParser, function (req, res) {
     var startTime = 10;
     var endTime = 20;
     var days = 1;
-    var dayOfWeek = 1;
+    var dayOfWeek = moment(req.body.from).isoWeekday() - 1;
     var bestPOIs = getBestPOIs(data.pois, req.body.tags, startTime, endTime, days, dayOfWeek);
 
     res.json({
@@ -167,6 +168,86 @@ app.post("/trip", jsonParser, function (req, res) {
 
   });
 });
+
+app.get('/t', function (req, res) {
+  var fs = require('fs');
+  var path = require('path');
+  var filePath = path.join(__dirname, 'poi.json');
+  fs.readFile(filePath, {encoding: 'utf-8'}, function(err,data){
+    if (!err){
+      res.json(data);
+
+      writePOI(JSON.stringify(translatePOI(JSON.parse(data)), null, '  '));
+    }else{
+      console.log(err);
+    }
+  });
+});
+
+var translatePOI = function(data) {
+  var pois = [];
+  for (var i in data) {
+    var poi = data[i];
+    var newpoi = {};
+
+    newpoi._id = poi._id;
+    newpoi.name = poi.name;
+    newpoi.address = poi.Address;
+    newpoi.city = poi.city;
+    newpoi.region = poi.region;
+    newpoi.rank = poi.rank;
+    newpoi.reviews = poi.reviews;
+    newpoi.review_rating = poi.review_rating;
+    newpoi.ppp = poi.ppp;
+    newpoi.duration = poi.duration;
+
+    newpoi.tags = {};
+    if (poi['family-friendly']) newpoi.tags['family-friendly'] = poi['family-friendly'];
+    if (poi['romantic']) newpoi.tags['romantic'] = poi['romantic'];
+    if (poi['luxury']) newpoi.tags['luxury'] = poi['luxury'];
+    if (poi['museum']) newpoi.tags['museum'] = poi['museum'];
+    if (poi['history']) newpoi.tags['history'] = poi['history'];
+    if (poi['animals']) newpoi.tags['animals'] = poi['animals'];
+    if (poi['nature']) newpoi.tags['nature'] = poi['nature'];
+    if (poi['water-sports']) newpoi.tags['water-sports'] = poi['water-sports'];
+    if (poi['scenic']) newpoi.tags['scenic'] = poi['nature'];
+    if (poi['art']) newpoi.tags['art'] = poi['art'];
+    if (poi['rollercoaster']) newpoi.tags['rollercoaster'] = poi['rollercoaster'];
+    if (poi['hiking']) newpoi.tags['hiking'] = poi['hiking'];
+    if (poi['architecture']) newpoi.tags['architecture'] = poi['architecture'];
+
+    newpoi.hours = [];
+    if (poi['Mon']) newpoi.hours.push(parseHours(poi['Mon'])); else newpoi.hours.push([]);
+    if (poi['Tue']) newpoi.hours.push(parseHours(poi['Tue'])); else newpoi.hours.push([]);
+    if (poi['Wed']) newpoi.hours.push(parseHours(poi['Wed'])); else newpoi.hours.push([]);
+    if (poi['Thu']) newpoi.hours.push(parseHours(poi['Thu'])); else newpoi.hours.push([]);
+    if (poi['Fri']) newpoi.hours.push(parseHours(poi['Fri'])); else newpoi.hours.push([]);
+    if (poi['Sat']) newpoi.hours.push(parseHours(poi['Sat'])); else newpoi.hours.push([]);
+    if (poi['Sun']) newpoi.hours.push(parseHours(poi['Sun'])); else newpoi.hours.push([]);
+
+    pois.push(newpoi);
+  }
+  return pois;
+};
+
+var parseHours = function(hours) {
+  var hoursArr = [];
+
+  var timeArr = hours.split("-");
+  hoursArr.push(parseInt(timeArr[0])/100);
+  hoursArr.push(parseInt(timeArr[1])/100);
+
+  return hoursArr;
+};
+
+var writePOI = function(data) {
+  var fs = require('fs');
+  var path = require('path');
+  var filePath = path.join(__dirname, 'poi_new.json');
+  fs.writeFile(filePath, data, function(err) {
+      console.log("The file was saved!");
+  });
+};
 
 var server = app.listen(3000, function () {
 
